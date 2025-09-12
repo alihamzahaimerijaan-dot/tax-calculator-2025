@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Unified Tax Calculator 2025</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+        * {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+        }
+
+        .switch { position: relative; display: inline-block; width: 42px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #4f46e5; }
+        input:checked + .slider:before { transform: translateX(18px); }
+
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            border-radius: 8px 8px 0 0;
+        }
+        .tab-button.active {
+            border-color: #4f46e5;
+            color: #4f46e5;
+            font-weight: 600;
+            background: rgba(79, 70, 229, 0.08);
+        }
+        .calculator-content {
+            display: none;
+        }
+        .calculator-content.active {
+            display: block;
+        }
+
+        .card {
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            background: white;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(79, 70, 229, 0.15);
+        }
+
+        .result-card {
+            background: linear-gradient(120deg, #f0f4ff 0%, #e6f0ff 100%);
+            border: 1px solid #e0e7ff;
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, #4f46e5, #7c3aed);
+            border: none;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(to right, #4338ca, #6d28d9);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(to right, #10b981, #34d399);
+            border: none;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: linear-gradient(to right, #059669, #10b981);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+        }
+
+        .btn-reset {
+            background: linear-gradient(to right, #64748b, #94a3b8);
+            border: none;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-reset:hover {
+            background: linear-gradient(to right, #475569, #64748b);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(100, 116, 139, 0.25);
+        }
+
+        .input-field {
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            padding: 12px 16px;
+            transition: all 0.3s ease;
+            background: #f9fafb;
+        }
+
+        .input-field:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+            background: white;
+            outline: none;
+        }
+
+        .toggle-container {
+            background: #f3f4f6;
+            border-radius: 12px;
+            padding: 12px 16px;
+        }
+
+        .tax-badge {
+            background: #eef2ff;
+            color: #4f46e5;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .summary-item {
+            border-bottom: 1px dashed #e5e7eb;
+            padding: 12px 0;
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .total-box {
+            background: #4f46e5;
+            color: white;
+            border-radius: 12px;
+        }
+
+        .slab-item {
+            border-left: 3px solid #4f46e5;
+            padding-left: 12px;
+            margin-bottom: 8px;
+        }
+
+        .header-gradient {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            border-radius: 16px 16px 0 0;
+        }
+
+        .tax-icon {
+            background: rgba(255, 255, 255, 0.2);
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media print {
+            body { background: white !important; padding: 0 !important; margin: 0 !important; font-size: 12pt; color: black !important; }
+            .no-print { display: none !important; }
+            .print-container { box-shadow: none !important; max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+            #unified-print-view { display: block !important; }
+            .print-header { text-align: center; margin-bottom: 10mm; }
+            .print-title { font-size: 16pt !important; font-weight: bold; margin-bottom: 5mm; }
+            .print-section { margin-bottom: 5mm; }
+            .print-table { width: 100%; border-collapse: collapse; margin-bottom: 5mm; }
+            .print-table th, .print-table td { border: 1px solid #ddd; padding: 4px 8px; text-align: left; }
+            .print-table th { background-color: #f5f5f5; }
+            .print-table .text-right { text-align: right; }
+            .print-total { font-weight: bold; border-top: 2px solid #333; padding-top: 3mm; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="card p-8 max-w-4xl w-full print-container">
+        <div class="header-gradient p-6 rounded-xl mb-6 no-print">
+            <div class="flex flex-col md:flex-row items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="tax-icon">
+                        <i class="fas fa-calculator text-white text-2xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold">TMRAC Tax Calculator 2025</h1>
+                        <p class="text-indigo-100">For Salaried, Non-Salaried, and Agricultural Income</p>
+                    </div>
+                </div>
+                <div class="mt-4 md:mt-0">
+                    <div class="tax-badge inline-block">
+                        <i class="fas fa-bolt mr-2"></i>Updated with 2025 Tax Rates
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="border-b border-gray-200 mb-6 no-print">
+            <nav class="flex -mb-px" id="tabs">
+                <button class="tab-button active" data-tab="salaried">
+                    <i class="fas fa-briefcase mr-2"></i>Salaried
+                </button>
+                <button class="tab-button" data-tab="non-salaried">
+                    <i class="fas fa-chart-line mr-2"></i>Non-Salaried
+                </button>
+                <button class="tab-button" data-tab="agricultural">
+                    <i class="fas fa-tractor mr-2"></i>Agricultural
+                </button>
+            </nav>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6 mb-4 no-print">
+          <div>
+            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
+                <i class="fas fa-user mr-2 text-indigo-500"></i>Name
+            </label>
+            <input type="text" id="name" placeholder="Enter your name" class="input-field w-full">
+          </div>
+          <div>
+            <label for="cnic" class="block text-sm font-medium text-gray-700 mb-1">
+                <i class="fas fa-id-card mr-2 text-indigo-500"></i>CNIC (without dashes)
+            </label>
+            <input type="text" id="cnic" placeholder="Enter CNIC" class="input-field w-full">
+          </div>
+        </div>
+
+        <div id="salaried-calculator" class="calculator-content active no-print">
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+                <i class="fas fa-money-bill-wave mr-2 text-indigo-500"></i>Enter Amount (PKR)
+            </label>
+            <input type="number" placeholder="Enter Amount (PKR)" id="salaried-income" class="input-field mb-4 w-full" />
+            <div class="toggle-container mb-4">
+                <div class="flex flex-col sm:flex-row justify-between gap-3">
+                    <label class="flex items-center gap-2 text-sm font-medium text-gray-700">
+                        <i class="fas fa-calendar-alt text-indigo-500"></i> Monthly Input
+                        <label class="switch"><input type="checkbox" id="salaried-monthly"><span class="slider"></span></label>
+                    </label>
+                    <label class="flex items-center gap-2 text-sm font-medium text-gray-700">
+                        <i class="fas fa-heartbeat text-indigo-500"></i> Medical Allowance
+                        <label class="switch"><input type="checkbox" id="salaried-medical"><span class="slider"></span></label>
+                    </label>
+                    <label class="flex items-center gap-2 text-sm font-medium text-gray-700">
+                        <i class="fas fa-exchange-alt text-indigo-500"></i> Reverse Calc (Goal Seek)
+                        <label class="switch"><input type="checkbox" id="salaried-reverse"><span class="slider"></span></label>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div id="non-salaried-calculator" class="calculator-content no-print">
+             <div class="mb-4">
+                <label for="non-salaried-income" class="block text-sm font-medium text-gray-700 mb-1" id="non-salaried-income-label">
+                    <i class="fas fa-money-check-alt mr-2 text-blue-500"></i>Annual Taxable Income (PKR)
+                </label>
+                <input type="number" id="non-salaried-income" placeholder="Enter annual taxable income" class="input-field w-full">
+            </div>
+             <div class="toggle-container mb-4">
+                <label class="flex items-center gap-2 text-sm font-medium text-gray-700">
+                    <i class="fas fa-exchange-alt text-blue-500"></i> Reverse Calculation (Goal Seek)
+                    <label class="switch"><input type="checkbox" id="non-salaried-reverse"><span class="slider"></span></label>
+                </label>
+            </div>
+        </div>
+
+        <div id="agricultural-calculator" class="calculator-content no-print">
+            <div class="mb-4">
+                <label for="agricultural-income" class="block text-sm font-medium text-gray-700 mb-1" id="agricultural-income-label">
+                    <i class="fas fa-wheat-alt mr-2 text-green-500"></i>Agricultural Income (PKR)
+                </label>
+                <input type="number" id="agricultural-income" placeholder="Enter Agricultural Income (PKR)" class="input-field w-full" />
+            </div>
+             <div class="toggle-container mb-4">
+                <label class="flex items-center gap-2 text-sm font-medium text-gray-700">
+                    <i class="fas fa-exchange-alt text-green-500"></i> Reverse Calculation (Goal Seek)
+                    <label class="switch"><input type="checkbox" id="agricultural-reverse"><span class="slider"></span></label>
+                </label>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap gap-4 mt-6 no-print">
+            <button onclick="calculate()" class="btn-primary flex-1 py-3 px-6 rounded-lg">
+                <i class="fas fa-calculator mr-2"></i>Calculate
+            </button>
+            <button onclick="printReport()" class="btn-secondary flex-1 py-3 px-6 rounded-lg">
+                <i class="fas fa-print mr-2"></i>Print Report
+            </button>
+            <button onclick="resetForm()" class="btn-reset flex-1 py-3 px-6 rounded-lg">
+                <i class="fas fa-redo mr-2"></i>Reset
+            </button>
+        </div>
+
+        <div id="result-display" class="mt-6 hidden no-print">
+            <div class="result-card p-6 rounded-xl">
+                <h3 class="text-xl font-bold text-indigo-800 pb-3 mb-4 border-b border-indigo-100 flex items-center">
+                    <i class="fas fa-file-invoice-dollar mr-3"></i>
+                    <span id="result-title">Tax Calculation Summary</span>
+                </h3>
+                <div id="result-details"></div>
+            </div>
+        </div>
+
+        <div id="unified-print-view" class="hidden">
+            <div class="print-header">
+                <h1 class="print-title" id="print-report-title">Salary Tax Calculation Report 2025</h1>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>Date: <span id="print-date"></span></div>
+                    <div class="text-right">Generated by: TMRAC Tax Calculator</div>
+                </div>
+            </div>
+            <div class="print-section">
+                <h3 class="font-bold text-lg mb-2">Taxpayer Information</h3>
+                <table class="print-table">
+                    <tr><td width="30%">Name</td><td id="print-name"></td></tr>
+                    <tr><td>CNIC</td><td id="print-cnic"></td></tr>
+                </table>
+            </div>
+            <div id="print-content-area">
+                </div>
+            <div class="text-xs text-center mt-8">
+                This is a computer-generated report and does not require a signature.
+            </div>
+        </div>
+
+        <div class="mt-8 text-center text-gray-500 text-sm no-print">
+            <p>© 2025 TMRAC Tax Calculator. All calculations are based on current Pakistan tax regulations.</p>
+        
+        </div>
+    </div>
+
+<script>
+    // --- State Management ---
+    let activeTab = 'salaried';
+    let latestReport = {};
+
+    // --- Tab Switching Logic ---
+    const tabs = document.getElementById('tabs');
+    tabs.addEventListener('click', (e) => {
+        if (!e.target.matches('.tab-button')) return;
+        const tabName = e.target.dataset.tab;
+        if (tabName === activeTab) return;
+        activeTab = tabName;
+        latestReport = {};
+        document.getElementById('result-display').classList.add('hidden');
+        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+        e.target.classList.add('active');
+        document.querySelectorAll('.calculator-content').forEach(content => content.classList.remove('active'));
+        document.getElementById(`${tabName}-calculator`).classList.add('active');
+    });
+
+    // --- Input Handling ---
+    document.getElementById('cnic').addEventListener('input', (e) => {
+        e.target.value = e.target.value.replace(/\D/g, '').substring(0, 13);
+    });
+    document.getElementById('non-salaried-reverse').addEventListener('change', (e) => {
+        document.getElementById('non-salaried-income-label').textContent = e.target.checked ?
+            'Desired Tax Amount (PKR)' : 'Annual Taxable Income (PKR)';
+    });
+    document.getElementById('agricultural-reverse').addEventListener('change', (e) => {
+        document.getElementById('agricultural-income-label').textContent = e.target.checked ?
+            'Desired Tax Amount (PKR)' : 'Agricultural Income (PKR)';
+    });
+
+    // --- Fixed Tax Slabs ---
+    const salariedSlabs = [
+        { limit: 600000, rate: 0.0, label: "0% on first Rs. 600,000" },
+        { limit: 600000, rate: 0.05, label: "5% on next Rs. 600,000" },
+        { limit: 1000000, rate: 0.15, label: "15% on next Rs. 1,000,000" },
+        { limit: 1000000, rate: 0.25, label: "25% on next Rs. 1,000,000" },
+        { limit: 900000, rate: 0.30, label: "30% on next Rs. 900,000" },
+        { limit: Infinity, rate: 0.35, label: "35% on remaining amount" },
+    ];
+
+    // Fixed slab definitions (removed +1 offset in min values)
+    const nonSalariedSlabs = [
+        { min: 0, max: 600000, rate: 0.0 },
+        { min: 600000, max: 1200000, rate: 0.15 },
+        { min: 1200000, max: 1600000, rate: 0.20 },
+        { min: 1600000, max: 3200000, rate: 0.30 },
+        { min: 3200000, max: 5600000, rate: 0.40 },
+        { min: 5600000, max: Infinity, rate: 0.45 }
+    ];
+
+    const nonSalariedSuperTaxSlabs = [
+        { min: 0, max: 150000000, rate: 0.0 },
+        { min: 150000000, max: 200000000, rate: 0.01 },
+        { min: 200000000, max: 250000000, rate: 0.02 },
+        { min: 250000000, max: 300000000, rate: 0.03 },
+        { min: 300000000, max: 350000000, rate: 0.04 },
+        { min: 350000000, max: 400000000, rate: 0.06 },
+        { min: 400000000, max: 500000000, rate: 0.08 },
+        { min: 500000000, max: Infinity, rate: 0.10 }
+    ];
+
+    // UPDATED Agricultural Slabs
+    const agriculturalSlabs = [
+        { min: 0,       max: 400000,   rate: 0,    fixed: 0 },
+        { min: 400000,  max: 800000,   rate: 0,    fixed: 1000 },
+        { min: 800000,  max: 1200000,  rate: 0,    fixed: 2000 },
+        { min: 1200000, max: 2400000,  rate: 0.05, fixed: 0 },
+        { min: 2400000, max: 4800000,  rate: 0.10, fixed: 60000 },
+        { min: 4800000, max: Infinity, rate: 0.15, fixed: 300000 }
+    ];
+
+    // --- Formatting Helpers ---
+    function formatDecimal(num) { return num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function formatRound(num) { return Math.round(num).toLocaleString(); }
+
+    // --- Main Calculation Router ---
+    function calculate() {
+        latestReport = {
+            name: document.getElementById('name').value || 'N/A',
+            cnic: document.getElementById('cnic').value || 'N/A',
+            type: activeTab,
+            date: new Date().toLocaleDateString()
+        };
+        let success = false;
+        if (activeTab === 'salaried') success = calculateSalaried();
+        else if (activeTab === 'non-salaried') success = calculateNonSalaried();
+        else if (activeTab === 'agricultural') success = calculateAgricultural();
+        if(success) {
+            displayResults();
+            document.getElementById('result-display').classList.remove('hidden');
+            scrollToResults();
+        }
+    }
+
+    function scrollToResults() {
+        document.getElementById('result-display').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // --- Salaried Calculator Logic ---
+    function calculateSalaried() {
+        const grossInput = parseFloat(document.getElementById("salaried-income").value);
+        if (isNaN(grossInput) || grossInput < 0) { alert('Please enter a valid amount.'); return false; }
+        const isReverse = document.getElementById("salaried-reverse").checked;
+        if(isReverse) {
+            const estimatedIncome = findIncomeForTax(grossInput, calculateTaxForSalaried);
+            if(estimatedIncome === null) { alert('Could not find an income for that tax amount.'); return false; }
+            return forwardCalcSalaried(estimatedIncome, false);
+        } else {
+            const isMonthly = document.getElementById("salaried-monthly").checked;
+            const hasMedical = document.getElementById("salaried-medical").checked;
+            const grossAnnual = isMonthly ? grossInput * 12 : grossInput;
+            return forwardCalcSalaried(grossAnnual, hasMedical);
+        }
+    }
+    function forwardCalcSalaried(gross, hasMedical) {
+        let taxable = gross, medicalAllowance = hasMedical ? gross * 0.090909 : 0;
+        taxable = Math.max(0, gross - medicalAllowance);
+        let { totalTax, slabCalculations } = calculateTaxForSalaried(taxable, true);
+        Object.assign(latestReport, {
+            grossIncome: gross,
+            taxableIncome: taxable,
+            totalTax,
+            medicalAllowance,
+            netPayable: gross - totalTax,
+            slabCalculations
+        });
+        return true;
+    }
+    function calculateTaxForSalaried(income, getBreakdown = false) {
+        let totalTax = 0, temp = income, slabCalculations = [];
+        for (const slab of salariedSlabs) {
+            if (temp <= 0) break;
+            const amount = Math.min(temp, slab.limit);
+            const taxOnSlab = amount * slab.rate;
+            totalTax += taxOnSlab;
+            if (getBreakdown && amount > 0) slabCalculations.push({ label: slab.label, amount, tax: taxOnSlab });
+            temp -= amount;
+        }
+        if (income > 10000000) {
+            const additionalTax = totalTax * 0.10;
+            totalTax += additionalTax;
+            if (getBreakdown) slabCalculations.push({ label: "Additional 10% tax", amount: 0, tax: additionalTax });
+        }
+        return getBreakdown ? { totalTax, slabCalculations } : totalTax;
+    }
+
+    // --- Non-Salaried & Agricultural Logic ---
+    function calculateNonSalaried() {
+        const incomeInput = parseFloat(document.getElementById("non-salaried-income").value);
+        if (isNaN(incomeInput) || incomeInput < 0) { alert('Please enter a valid amount.'); return false; }
+        const isReverse = document.getElementById("non-salaried-reverse").checked;
+        if(isReverse) {
+            const estimatedIncome = findIncomeForTax(incomeInput, calculateTaxForNonSalaried);
+            if(estimatedIncome === null) { alert('Could not find an income for that tax amount.'); return false; }
+            return forwardCalcNonSalaried(estimatedIncome);
+        } else {
+            return forwardCalcNonSalaried(incomeInput);
+        }
+    }
+    function forwardCalcNonSalaried(income) {
+        let { tax: incomeTax, breakdown: incomeTaxBreakdown } = computeTaxWithSlabs(income, nonSalariedSlabs);
+        let surcharge = income > 10000000 ? incomeTax * 0.10 : 0;
+        let { tax: superTax, breakdown: superTaxBreakdown } = computeTaxWithSlabs(income, nonSalariedSuperTaxSlabs);
+        const totalTax = incomeTax + surcharge + superTax;
+        Object.assign(latestReport, {
+            grossIncome: income,
+            incomeTax,
+            incomeTaxBreakdown,
+            surcharge,
+            superTax,
+            superTaxBreakdown,
+            totalTax
+        });
+        return true;
+    }
+    function calculateTaxForNonSalaried(income) {
+        let { tax: incomeTax } = computeTaxWithSlabs(income, nonSalariedSlabs);
+        let surcharge = income > 10000000 ? incomeTax * 0.10 : 0;
+        let { tax: superTax } = computeTaxWithSlabs(income, nonSalariedSuperTaxSlabs);
+        return incomeTax + surcharge + superTax;
+    }
+
+    function calculateAgricultural() {
+        const incomeInput = parseFloat(document.getElementById("agricultural-income").value);
+        if (isNaN(incomeInput) || incomeInput < 0) { alert('Please enter a valid amount.'); return false; }
+        const isReverse = document.getElementById("agricultural-reverse").checked;
+        if(isReverse) {
+            const estimatedIncome = findIncomeForTax(incomeInput, (inc) => computeAgriculturalTax(inc, agriculturalSlabs).tax);
+            if(estimatedIncome === null) { alert('Could not find an income for that tax amount.'); return false; }
+            return forwardCalcAgricultural(estimatedIncome);
+        } else {
+            return forwardCalcAgricultural(incomeInput);
+        }
+    }
+    function forwardCalcAgricultural(income) {
+        let { tax: totalTax, breakdown: slabCalculations } = computeAgriculturalTax(income, agriculturalSlabs);
+        Object.assign(latestReport, {
+            grossIncome: income,
+            totalTax,
+            slabCalculations
+        });
+        return true;
+    }
+
+    // --- NEW calculation function for Agricultural Tax ---
+    function computeAgriculturalTax(income, slabs) {
+        const slab = slabs.find(s => income > s.min && income <= s.max);
+        if (!slab) return { tax: 0, breakdown: [] };
+
+        const taxableInSlab = income - slab.min;
+        const taxOnRate = taxableInSlab > 0 ? taxableInSlab * slab.rate : 0;
+        const totalTax = slab.fixed + taxOnRate;
+        const breakdown = [];
+
+        if (slab.fixed > 0) {
+            breakdown.push({
+                label: 'Fixed Amount',
+                rate: 'N/A',
+                amount: 0,
+                tax: slab.fixed
+            });
+        }
+        if (slab.rate > 0 && taxableInSlab > 0) {
+            breakdown.push({
+                label: `Tax on amount exceeding ${formatRound(slab.min)}`,
+                rate: `${(slab.rate * 100).toFixed(2)}%`,
+                amount: taxableInSlab,
+                tax: taxOnRate
+            });
+        }
+        if (breakdown.length === 0) { // For 0% slab
+            breakdown.push({ label: '0% Tax Rate', rate: '0.00%', amount: income, tax: 0 });
+        }
+        if (slab.rate === 0 && slab.fixed > 0 && breakdown.length === 1) { // For fixed-only slabs
+            breakdown[0].label = 'Fixed Tax';
+            breakdown[0].rate = 'Fixed';
+            breakdown[0].amount = income;
+        }
+
+        return { tax: totalTax, breakdown };
+    }
+
+    // --- Generic Calculation Helpers ---
+    function computeTaxWithSlabs(income, slabs) {
+        let tax = 0, breakdown = [];
+        let remainingIncome = income;
+
+        for (const slab of slabs) {
+            if (remainingIncome <= 0) break;
+
+            const taxableInSlab = Math.min(remainingIncome, slab.max - slab.min);
+            if (taxableInSlab <= 0) continue;
+
+            const taxOnSlab = taxableInSlab * slab.rate;
+            tax += taxOnSlab;
+            
+            breakdown.push({
+                label: `${formatRound(slab.min)} - ${slab.max === Infinity ? 'Above' : formatRound(slab.max)}`,
+                rate: `${(slab.rate * 100).toFixed(2)}%`,
+                amount: taxableInSlab,
+                tax: taxOnSlab
+            });
+            remainingIncome -= taxableInSlab;
+        }
+        return { tax, breakdown };
+    }
+
+
+    function findIncomeForTax(targetTax, taxFunction) {
+        let low = 0, high = 1e10; // Search range for income
+        let bestFitIncome = null;
+        let minDiff = Infinity; // Track the smallest difference found
+
+        // Perform a more precise binary search
+        for (let iterations = 0; iterations < 200; iterations++) { // Increased iterations for precision
+            let mid = low + (high - low) / 2; // Use floating point mid
+            let calculatedTax = taxFunction(mid);
+
+            let currentDiff = Math.abs(calculatedTax - targetTax);
+
+            if (currentDiff < minDiff) {
+                minDiff = currentDiff;
+                bestFitIncome = mid;
+            }
+
+            if (currentDiff < 0.01) { // A very small tolerance for convergence
+                // If we are very close, try to refine by checking neighbors
+                if (Math.abs(taxFunction(Math.round(mid)) - targetTax) < 0.01) {
+                    return Math.round(mid); // Return rounded if it's a perfect fit
+                }
+                // If not a perfect round, continue searching or break if sufficiently close
+                if (currentDiff < 0.0001) break; // Break if extremely close
+            }
+
+            if (calculatedTax < targetTax) {
+                low = mid; // Move low up
+            } else {
+                high = mid; // Move high down
+            }
+        }
+
+        // After binary search, check a small range around the best fit for exact matches
+        // This helps catch exact boundary values that binary search might slightly miss
+        if (bestFitIncome !== null) {
+            for (let i = -5; i <= 5; i++) { // Check a small integer range around the best fit
+                let candidateIncome = Math.round(bestFitIncome + i);
+                if (candidateIncome >= 0 && Math.abs(taxFunction(candidateIncome) - targetTax) < 0.01) {
+                    return candidateIncome;
+                }
+            }
+        }
+
+        // Fallback to the best found income, rounded
+        return bestFitIncome !== null ? Math.round(bestFitIncome) : null;
+    }
+
+    // --- Display and Print Logic ---
+    function displayResults() {
+        document.getElementById('result-title').textContent = `${capitalize(activeTab)} Tax Calculation Summary`;
+        let html = '';
+        if (activeTab === 'salaried') html = getSalariedResultsHTML();
+        else if (activeTab === 'non-salaried') html = getNonSalariedResultsHTML();
+        else if (activeTab === 'agricultural') html = getAgriculturalResultsHTML();
+        document.getElementById('result-details').innerHTML = html;
+    }
+
+    function getSalariedResultsHTML() {
+        let slabHtml = latestReport.slabCalculations.map(s => `
+            <div class="slab-item">
+                <div class="flex justify-between">
+                    <div>${s.label}</div>
+                    <div class="font-medium">Rs ${formatDecimal(s.tax)}</div>
+                </div>
+                ${s.amount > 0 ? `<div class="text-xs text-gray-500">On Rs ${formatDecimal(s.amount)}</div>` : ''}
+            </div>
+        `).join('');
+
+        return `
+            <div class="mb-6">
+                <h4 class="font-semibold text-gray-700 mb-3 flex items-center">
+                    <i class="fas fa-layer-group mr-2 text-indigo-500"></i>Tax Breakdown
+                </h4>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    ${slabHtml}
+                </div>
+            </div>
+
+            <div class="summary-grid">
+                <div class="summary-item flex justify-between">
+                    <div class="flex items-center"><i class="fas fa-money-bill-wave mr-2 text-gray-500"></i>Gross Income</div>
+                    <div class="font-medium">Rs ${formatRound(latestReport.grossIncome)}</div>
+                </div>
+
+                <div class="summary-item flex justify-between">
+                    <div class="flex items-center"><i class="fas fa-heartbeat mr-2 text-gray-500"></i>Medical Allowance</div>
+                    <div class="font-medium">Rs ${formatRound(latestReport.medicalAllowance)}</div>
+                </div>
+
+                <div class="summary-item flex justify-between">
+                    <div class="flex items-center"><i class="fas fa-calculator mr-2 text-gray-500"></i>Taxable Income</div>
+                    <div class="font-medium">Rs ${formatRound(latestReport.taxableIncome)}</div>
+                </div>
+
+                <div class="summary-item flex justify-between">
+                    <div class="flex items-center"><i class="fas fa-file-invoice-dollar mr-2 text-gray-500"></i>Total Tax</div>
+                    <div class="font-medium">Rs ${formatRound(latestReport.totalTax)}</div>
+                </div>
+
+                <div class="summary-item flex justify-between pt-4 mt-2 border-t border-gray-200">
+                    <div class="flex items-center text-lg">
+                        <i class="fas fa-wallet mr-2 text-indigo-500"></i>Net Annual Income
+                    </div>
+                    <div class="text-xl font-bold text-indigo-700">Rs ${formatRound(latestReport.netPayable)}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    function getNonSalariedResultsHTML() {
+        let incomeTaxRows = latestReport.incomeTaxBreakdown.map(s => `
+            <div class="slab-item">
+                <div class="flex justify-between">
+                    <div>${s.label}</div>
+                    <div class="font-medium">Rs ${formatDecimal(s.tax)}</div>
+                </div>
+                <div class="text-xs text-gray-500">${s.rate} on Rs ${formatDecimal(s.amount)}</div>
+            </div>
+        `).join('');
+
+        let superTaxHtml = '';
+        if (latestReport.superTax > 0) {
+            superTaxHtml = latestReport.superTaxBreakdown.map(s => `
+                <div class="slab-item">
+                    <div class="flex justify-between">
+                        <div>${s.label}</div>
+                        <div class="font-medium">Rs ${formatDecimal(s.tax)}</div>
+                    </div>
+                    <div class="text-xs text-gray-500">${s.rate} on Rs ${formatDecimal(s.amount)}</div>
+                </div>
+            `).join('');
+        }
+
+        return `
+            <div class="mb-6">
+                <h4 class="font-semibold text-gray-700 mb-3 flex items-center">
+                    <i class="fas fa-layer-group mr-2 text-blue-500"></i>Income Tax Breakdown
+                </h4>
+                <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                    ${incomeTaxRows}
+                </div>
+
+                ${latestReport.superTax > 0 ? `
+                    <h4 class="font-semibold text-gray-700 mb-3 flex items-center">
+                        <i class="fas fa-layer-group mr-2 text-blue-500"></i>Super Tax Breakdown
+                    </h4>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        ${superTaxHtml}
+                    </div>
+                ` : ''}
+            </div>
+
+            <div class="summary-grid">
+                <div class="summary-item flex justify-between">
+                    <div class="flex items-center"><i class="fas fa-money-bill-wave mr-2 text-gray-500"></i>Gross Income</div>
+                    <div class="font-medium">Rs ${formatRound(latestReport.grossIncome)}</div>
+                </div>
+
+                <div class="summary-item flex justify-between">
+                    <div class="flex items-center"><i class="fas fa-file-invoice mr-2 text-gray-500"></i>Income Tax</div>
+                    <div class="font-medium">Rs ${formatRound(latestReport.incomeTax)}</div>
+                </div>
+
+                <div class="summary-item flex justify-between">
+                    <div class="flex items-center"><i class="fas fa-plus-circle mr-2 text-gray-500"></i>Surcharge</div>
+                    <div class="font-medium">Rs ${formatRound(latestReport.surcharge)}</div>
+                </div>
+
+                <div class="summary-item flex justify-between">
+                    <div class="flex items-center"><i class="fas fa-star mr-2 text-gray-500"></i>Super Tax</div>
+                    <div class="font-medium">Rs ${formatRound(latestReport.superTax)}</div>
+                </div>
+
+                <div class="summary-item flex justify-between pt-4 mt-2 border-t border-gray-200">
+                    <div class="flex items-center text-lg">
+                        <i class="fas fa-file-invoice-dollar mr-2 text-blue-500"></i>Total Tax Payable
+                    </div>
+                    <div class="text-xl font-bold text-blue-700">Rs ${formatRound(latestReport.totalTax)}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    function getAgriculturalResultsHTML() {
+        let slabHtml = latestReport.slabCalculations.map(s => `
+            <div class="slab-item">
+                <div class="flex justify-between">
+                    <div>${s.label}</div>
+                    <div class="font-medium">Rs ${formatDecimal(s.tax)}</div>
+                </div>
+                ${s.amount > 0 ? `<div class="text-xs text-gray-500">${s.rate} on Rs ${formatDecimal(s.amount)}</div>` : ''}
+            </div>
+        `).join('');
+
+        return `
+            <div class="mb-6">
+                <h4 class="font-semibold text-gray-700 mb-3 flex items-center">
+                    <i class="fas fa-layer-group mr-2 text-green-500"></i>Tax Breakdown
+                </h4>
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    ${slabHtml}
+                </div>
+            </div>
+
+            <div class="summary-grid">
+                <div class="summary-item flex justify-between">
+                    <div class="flex items-center"><i class="fas fa-wheat-alt mr-2 text-gray-500"></i>Agricultural Income</div>
+                    <div class="font-medium">Rs ${formatRound(latestReport.grossIncome)}</div>
+                </div>
+
+                <div class="summary-item flex justify-between pt-4 mt-2 border-t border-gray-200">
+                    <div class="flex items-center text-lg">
+                        <i class="fas fa-file-invoice-dollar mr-2 text-green-500"></i>Total Tax Payable
+                    </div>
+                    <div class="text-xl font-bold text-green-700">Rs ${formatRound(latestReport.totalTax)}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    function printReport() {
+        if (!latestReport.type) { alert("Please perform a calculation before printing."); return; }
+        document.getElementById('print-report-title').textContent = `${capitalize(activeTab)} Tax Calculation Report 2025`;
+        document.getElementById('print-date').textContent = new Date().toLocaleDateString();
+        document.getElementById('print-name').textContent = latestReport.name;
+        document.getElementById('print-cnic').textContent = latestReport.cnic;
+        let printHTML = '';
+        if (activeTab === 'salaried') printHTML = getSalariedPrintHTML();
+        else if (activeTab === 'non-salaried') printHTML = getNonSalariedPrintHTML();
+        else if (activeTab === 'agricultural') printHTML = getAgriculturalPrintHTML();
+        document.getElementById('print-content-area').innerHTML = printHTML;
+        window.print();
+    }
+    function getSalariedPrintHTML() {
+        let slabRows = latestReport.slabCalculations.map(s => `<tr><td>${s.label}</td><td class="text-right">${s.amount > 0 ? formatDecimal(s.amount) : '-'}</td><td class="text-right">${formatDecimal(s.tax)}</td></tr>`).join('');
+        return `<div class="print-section"><h3 class="font-bold text-lg mb-2">Tax Breakdown</h3><table class="print-table"><thead><tr><th width="50%">Tax Slab</th><th class="text-right">Amount (PKR)</th><th class="text-right">Tax (PKR)</th></tr></thead><tbody>${slabRows}</tbody></table></div>
+            <div class="print-section"><h3 class="font-bold text-lg mb-2">Summary</h3><table class="print-table">
+                <tr><td width="50%">Gross Annual Income</td><td class="text-right">${formatRound(latestReport.grossIncome)}</td></tr>
+                <tr><td>Medical Allowance</td><td class="text-right">${formatRound(latestReport.medicalAllowance)}</td></tr>
+                <tr><td>Taxable Income</td><td class="text-right">${formatRound(latestReport.taxableIncome)}</td></tr>
+                <tr class="print-total"><td>Total Tax Payable</td><td class="text-right">${formatRound(latestReport.totalTax)}</td></tr>
+                <tr><td><strong>Net Annual Income</strong></td><td class="text-right"><strong>${formatRound(latestReport.netPayable)}</strong></td></tr>
+            </table></div>`;
+    }
+    function getNonSalariedPrintHTML() {
+        let incomeTaxRows = latestReport.incomeTaxBreakdown.map(s => `<tr><td>${s.label}</td><td class="text-right">${s.rate}</td><td class="text-right">${formatDecimal(s.amount)}</td><td class="text-right">${formatDecimal(s.tax)}</td></tr>`).join('');
+        let superTaxSection = '';
+        if (latestReport.superTax > 0) {
+            let superTaxRows = latestReport.superTaxBreakdown.map(s => `<tr><td>${s.label}</td><td class="text-right">${s.rate}</td><td class="text-right">${formatDecimal(s.amount)}</td><td class="text-right">${formatDecimal(s.tax)}</td></tr>`).join('');
+            superTaxSection = `<div class="print-section"><h3 class="font-bold text-lg mb-2">Super Tax Breakdown</h3><table class="print-table"><thead><tr><th>Slab</th><th class="text-right">Rate</th><th class="text-right">Amount</th><th class="text-right">Tax</th></tr></thead><tbody>${superTaxRows}</tbody></table></div>`;
+        }
+        return `<div class="print-section"><h3 class="font-bold text-lg mb-2">Income Tax Breakdown</h3><table class="print-table"><thead><tr><th>Slab</th><th class="text-right">Rate</th><th class="text-right">Amount</th><th class="text-right">Tax</th></tr></thead><tbody>${incomeTaxRows}</tbody></table></div>
+            ${superTaxSection}
+            <div class="print-section"><h3 class="font-bold text-lg mb-2">Summary</h3><table class="print-table">
+                <tr><td width="60%">Gross Income</td><td class="text-right">${formatRound(latestReport.grossIncome)}</td></tr>
+                <tr><td>Income Tax</td><td class="text-right">${formatRound(latestReport.incomeTax)}</td></tr>
+                <tr><td>Surcharge</td><td class="text-right">${formatRound(latestReport.surcharge)}</td></tr>
+                <tr><td>Super Tax</td><td class="text-right">${formatRound(latestReport.superTax)}</td></tr>
+                <tr class="print-total"><td><strong>Total Tax Payable</strong></td><td class="text-right"><strong>${formatRound(latestReport.totalTax)}</strong></td></tr>
+            </table></div>`;
+    }
+    function getAgriculturalPrintHTML() {
+        let slabRows = latestReport.slabCalculations.map(s => `<tr><td>${s.label}</td><td class="text-right">${s.rate}</td><td class="text-right">${s.amount > 0 ? formatDecimal(s.amount) : '-'}</td><td class="text-right">${formatDecimal(s.tax)}</td></tr>`).join('');
+        return `<div class="print-section"><h3 class="font-bold text-lg mb-2">Tax Breakdown</h3><table class="print-table"><thead><tr><th>Slab</th><th class="text-right">Rate</th><th class="text-right">Amount</th><th class="text-right">Tax</th></tr></thead><tbody>${slabRows}</tbody></table></div>
+            <div class="print-section"><h3 class="font-bold text-lg mb-2">Summary</h3><table class="print-table">
+                <tr><td width="60%">Agricultural Income</td><td class="text-right">${formatRound(latestReport.grossIncome)}</td></tr>
+                <tr class="print-total"><td><strong>Total Tax Payable</strong></td><td class="text-right"><strong>${formatRound(latestReport.totalTax)}</strong></td></tr>
+            </table></div>`;
+    }
+
+    // --- Utility Functions ---
+    function resetForm() {
+        document.querySelectorAll('input[type="text"], input[type="number"]').forEach(input => input.value = '');
+        document.querySelectorAll('input[type="checkbox"]').forEach(input => input.checked = false);
+        document.getElementById('result-display').classList.add('hidden');
+        document.getElementById('non-salaried-income-label').textContent = 'Annual Taxable Income (PKR)';
+        document.getElementById('agricultural-income-label').textContent = 'Agricultural Income (PKR)';
+        latestReport = {};
+    }
+    function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+    // Initialize form
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('print-date').textContent = new Date().toLocaleDateString();
+    });
+</script>
+</body>
+</html>
